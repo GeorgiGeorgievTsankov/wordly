@@ -15,3 +15,4 @@ describe('Wordly Foundation Tests', () => {
     expect(STRINGS.features.items.length).toBeGreaterThanOrEqual(6);
   });
 });
+
