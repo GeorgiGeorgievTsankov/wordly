@@ -58,3 +58,4 @@ describe('Authentication & Role Security Validation', () => {
     expect(validateGoal(150)).toBe(false);
   });
 });
+

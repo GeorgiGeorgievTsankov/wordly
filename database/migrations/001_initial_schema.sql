@@ -641,3 +641,4 @@ INSERT INTO public.achievements (id, name, description, icon, criteria) VALUES
 ('streak_7', 'Weekly Dedication', 'Maintain a 7-day study streak', 'Calendar', '{"min_streak": 7}'),
 ('streak_30', 'Unstoppable Habit', 'Maintain a 30-day study streak', 'Zap', '{"min_streak": 30}')
 ON CONFLICT (id) DO NOTHING;
+

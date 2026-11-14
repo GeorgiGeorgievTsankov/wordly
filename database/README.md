@@ -44,3 +44,4 @@ WHERE id = 'PASTE-USER-UUID-HERE';
 -- 3. Verify the role change
 SELECT id, username, display_name, role FROM public.profiles WHERE id = 'PASTE-USER-UUID-HERE';
 ```
+
