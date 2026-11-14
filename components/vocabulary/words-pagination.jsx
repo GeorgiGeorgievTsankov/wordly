@@ -16,3 +16,4 @@ export function WordsPagination({ page, totalPages }) {
 
   return <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />;
 }
+

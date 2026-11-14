@@ -124,3 +124,4 @@ export function VocabularyFilters({ categories = [] }) {
     </div>
   );
 }
+

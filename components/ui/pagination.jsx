@@ -59,3 +59,4 @@ export function Pagination({ page, totalPages, onPageChange }) {
     </nav>
   );
 }
+

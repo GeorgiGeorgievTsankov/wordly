@@ -87,3 +87,4 @@ describe('Vocabulary Validation', () => {
     expect(DIFFICULTIES).toContain('advanced');
   });
 });
+

@@ -92,3 +92,4 @@ export function WordCard({ word, isFavorite = false }) {
     </div>
   );
 }
+
