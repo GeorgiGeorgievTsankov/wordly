@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { calculateStreak } from '@/lib/services/progress';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -60,6 +61,21 @@ export default async function DashboardPage() {
     .eq('user_id', user.id);
 
   const totalXp = xpData?.reduce((acc, row) => acc + (row.xp || 0), 0) || 0;
+
+  // 5. Daily activity & streak
+  const userTimezone = profile?.timezone || 'Europe/Sofia';
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: userTimezone }).format(new Date());
+
+  const { data: activityRows } = await supabase
+    .from('daily_activity')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('activity_date', { ascending: true })
+    .limit(30);
+
+  const streak = calculateStreak(activityRows || [], todayStr);
+  const todayActivity = (activityRows || []).find((r) => r.activity_date === todayStr);
+  const todayReviewed = todayActivity?.words_reviewed || 0;
 
   const dailyGoal = profile?.daily_goal || 10;
   const displayName = profile?.display_name || profile?.username || 'Learner';
@@ -163,7 +179,7 @@ export default async function DashboardPage() {
 
           <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-xl text-sm font-semibold">
             <Flame className="w-4 h-4 fill-amber-500 text-amber-500" />
-            <span>0 Day Streak (Today: 0/{dailyGoal})</span>
+            <span>{streak} Day Streak (Today: {todayReviewed}/{dailyGoal})</span>
           </div>
         </div>
       </Card>

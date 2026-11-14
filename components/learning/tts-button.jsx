@@ -42,3 +42,4 @@ export function TTSButton({ text, lang = 'en-US', className = '' }) {
     </button>
   );
 }
+
