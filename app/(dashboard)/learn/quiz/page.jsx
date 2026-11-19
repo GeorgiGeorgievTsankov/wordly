@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
+import { useState, useEffect, useCallback, useTransition, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, XCircle, ArrowRight, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -13,13 +14,17 @@ import { startStudySessionAction, submitReviewAction, completeStudySessionAction
 import { shuffleArray } from '@/lib/services/session-generator';
 import { GRADES } from '@/lib/services/srs';
 
-// Fallback dummy Bulgarian distractors if session has very few words
 const FALLBACK_DISTRACTORS = [
   'време', 'свят', 'живот', 'работа', 'къща', 'човек', 'ден', 'път',
   'приятел', 'начало', 'край', 'вода', 'място', 'книга', 'дума',
 ];
 
-export default function QuizPage() {
+function QuizContent() {
+  const searchParams = useSearchParams();
+  const wordSource = searchParams?.get('source') || 'all';
+  const categoryId = searchParams?.get('category') || null;
+  const sessionSize = parseInt(searchParams?.get('size') || '10', 10);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -45,11 +50,23 @@ export default function QuizPage() {
     setHasAnswered(false);
 
     try {
-      const res = await startStudySessionAction({ mode: 'quiz', sessionSize: 10 });
+      const res = await startStudySessionAction({
+        mode: 'quiz',
+        wordSource,
+        categoryId,
+        sessionSize,
+      });
+
       if (!res.success) {
         setError(res.error || 'Failed to initialize session');
       } else if (!res.words || res.words.length === 0) {
-        setError('No vocabulary words available for study. Add your own custom words to begin!');
+        setError(
+          wordSource === 'core'
+            ? 'No core vocabulary words found.'
+            : wordSource === 'personal'
+            ? 'You have not added any personal words yet.'
+            : 'No vocabulary words available for study.'
+        );
       } else {
         setSessionId(res.sessionId);
         setWords(res.words);
@@ -65,7 +82,7 @@ export default function QuizPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wordSource, categoryId, sessionSize]);
 
   useEffect(() => {
     loadSession();
@@ -80,7 +97,6 @@ export default function QuizPage() {
     const correctAnswer = currentWord.translation;
     const optionSet = new Set([correctAnswer]);
 
-    // Draw distractors from other words in the session
     const otherTranslations = words
       .filter((w) => w.id !== currentWord.id && w.translation && w.translation !== correctAnswer)
       .map((w) => w.translation);
@@ -91,7 +107,6 @@ export default function QuizPage() {
       optionSet.add(distractor);
     }
 
-    // If still less than 4, fill from fallback list
     if (optionSet.size < 4) {
       const shuffledFallbacks = shuffleArray(FALLBACK_DISTRACTORS);
       for (const item of shuffledFallbacks) {
@@ -136,7 +151,6 @@ export default function QuizPage() {
       setHasAnswered(false);
       setCurrentIndex((i) => i + 1);
     } else {
-      // Conclude session
       const durationSec = Math.round((Date.now() - sessionStats.startTime) / 1000);
       completeStudySessionAction({
         sessionId,
@@ -168,12 +182,20 @@ export default function QuizPage() {
         <Card className="p-8 space-y-5">
           <p className="text-sm font-medium text-slate-700">{error || 'No words found for quiz.'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/words/personal/new">
-              <Button size="sm" className="w-full">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Add Personal Word</span>
-              </Button>
-            </Link>
+            {wordSource === 'personal' ? (
+              <Link href="/words/personal/new">
+                <Button size="sm" className="w-full">
+                  <PlusCircle className="w-4 h-4 mr-1.5" />
+                  <span>Add Personal Word</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/learn">
+                <Button size="sm" className="w-full">
+                  <span>Back to Study Modes</span>
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="outline" onClick={loadSession}>
               <span>Try Again</span>
             </Button>
@@ -194,19 +216,34 @@ export default function QuizPage() {
     );
   }
 
+  const sourceBadge =
+    wordSource === 'core'
+      ? '300 Core Verbs'
+      : wordSource === 'personal'
+      ? 'Personal Words'
+      : 'All Words';
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <SessionHeader
         currentIndex={currentIndex}
         totalWords={words.length}
         modeName="Multiple Choice"
+        sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
       />
 
       {/* Question Card */}
       <Card className="p-8 text-center space-y-4 border-slate-200/80 shadow-md">
         <div className="flex items-center justify-between">
-          <Badge variant="brand">{currentWord.part_of_speech}</Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="brand">{currentWord.part_of_speech}</Badge>
+            {currentWord.isCustom ? (
+              <Badge variant="secondary">Personal Word</Badge>
+            ) : (
+              <Badge variant="outline">Core Dictionary</Badge>
+            )}
+          </div>
           <TTSButton text={currentWord.headword} />
         </div>
 
@@ -279,3 +316,17 @@ export default function QuizPage() {
   );
 }
 
+export default function QuizPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading quiz...</p>
+        </div>
+      }
+    >
+      <QuizContent />
+    </Suspense>
+  );
+}

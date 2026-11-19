@@ -59,3 +59,4 @@ WHERE email = 'your-admin-email@example.com';
 7. In Supabase Dashboard (**Authentication → URL Configuration**), set:
    - **Site URL**: `https://<your-vercel-domain>.vercel.app`
    - **Redirect URLs**: `https://<your-vercel-domain>.vercel.app/**`
+

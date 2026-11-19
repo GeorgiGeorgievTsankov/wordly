@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
+import { useState, useEffect, useCallback, useTransition, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, XCircle, ArrowRight, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -13,7 +14,12 @@ import { startStudySessionAction, submitReviewAction, completeStudySessionAction
 import { isCorrectAnswer } from '@/lib/validation/vocabulary';
 import { GRADES } from '@/lib/services/srs';
 
-export default function TypingPage() {
+function TypingContent() {
+  const searchParams = useSearchParams();
+  const wordSource = searchParams?.get('source') || 'all';
+  const categoryId = searchParams?.get('category') || null;
+  const sessionSize = parseInt(searchParams?.get('size') || '10', 10);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -42,11 +48,23 @@ export default function TypingPage() {
     setSubmitted(false);
 
     try {
-      const res = await startStudySessionAction({ mode: 'typing', sessionSize: 10 });
+      const res = await startStudySessionAction({
+        mode: 'typing',
+        wordSource,
+        categoryId,
+        sessionSize,
+      });
+
       if (!res.success) {
         setError(res.error || 'Failed to initialize session');
       } else if (!res.words || res.words.length === 0) {
-        setError('No vocabulary words available for study. Add your own custom words to begin!');
+        setError(
+          wordSource === 'core'
+            ? 'No core vocabulary words found.'
+            : wordSource === 'personal'
+            ? 'You have not added any personal words yet.'
+            : 'No vocabulary words available for study.'
+        );
       } else {
         setSessionId(res.sessionId);
         setWords(res.words);
@@ -62,13 +80,12 @@ export default function TypingPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wordSource, categoryId, sessionSize]);
 
   useEffect(() => {
     loadSession();
   }, [loadSession]);
 
-  // Auto-focus input on card change
   useEffect(() => {
     if (!loading && !submitted && inputRef.current) {
       inputRef.current.focus();
@@ -117,7 +134,6 @@ export default function TypingPage() {
       setIsCorrect(false);
       setCurrentIndex((i) => i + 1);
     } else {
-      // Conclude session
       const durationSec = Math.round((Date.now() - sessionStats.startTime) / 1000);
       completeStudySessionAction({
         sessionId,
@@ -149,12 +165,20 @@ export default function TypingPage() {
         <Card className="p-8 space-y-5">
           <p className="text-sm font-medium text-slate-700">{error || 'No words found for typing practice.'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/words/personal/new">
-              <Button size="sm" className="w-full">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Add Personal Word</span>
-              </Button>
-            </Link>
+            {wordSource === 'personal' ? (
+              <Link href="/words/personal/new">
+                <Button size="sm" className="w-full">
+                  <PlusCircle className="w-4 h-4 mr-1.5" />
+                  <span>Add Personal Word</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/learn">
+                <Button size="sm" className="w-full">
+                  <span>Back to Study Modes</span>
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="outline" onClick={loadSession}>
               <span>Try Again</span>
             </Button>
@@ -175,19 +199,34 @@ export default function TypingPage() {
     );
   }
 
+  const sourceBadge =
+    wordSource === 'core'
+      ? '300 Core Verbs'
+      : wordSource === 'personal'
+      ? 'Personal Words'
+      : 'All Words';
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <SessionHeader
         currentIndex={currentIndex}
         totalWords={words.length}
         modeName="Active Typing"
+        sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
       />
 
       {/* Target Word Card */}
       <Card className="p-8 text-center space-y-3 border-slate-200/80 shadow-md">
         <div className="flex items-center justify-between">
-          <Badge variant="brand">{currentWord.part_of_speech}</Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="brand">{currentWord.part_of_speech}</Badge>
+            {currentWord.isCustom ? (
+              <Badge variant="secondary">Personal Word</Badge>
+            ) : (
+              <Badge variant="outline">Core Dictionary</Badge>
+            )}
+          </div>
           <TTSButton text={currentWord.headword} />
         </div>
 
@@ -286,3 +325,17 @@ export default function TypingPage() {
   );
 }
 
+export default function TypingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading typing session...</p>
+        </div>
+      }
+    >
+      <TypingContent />
+    </Suspense>
+  );
+}

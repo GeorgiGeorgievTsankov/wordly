@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useEffect, useCallback, useTransition, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, RotateCw, PlusCircle, BrainCircuit } from 'lucide-react';
+import { RotateCw, PlusCircle, BrainCircuit } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,12 @@ import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { GRADES } from '@/lib/services/srs';
 
-export default function SmartReviewPage() {
+function SmartReviewContent() {
+  const searchParams = useSearchParams();
+  const wordSource = searchParams?.get('source') || 'all';
+  const categoryId = searchParams?.get('category') || null;
+  const sessionSize = parseInt(searchParams?.get('size') || '15', 10);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -35,8 +41,13 @@ export default function SmartReviewPage() {
     setIsFlipped(false);
 
     try {
-      // Smart review pulls primarily due and hard items
-      const res = await startStudySessionAction({ mode: 'review', sessionSize: 15 });
+      const res = await startStudySessionAction({
+        mode: 'review',
+        wordSource,
+        categoryId,
+        sessionSize,
+      });
+
       if (!res.success) {
         setError(res.error || 'Failed to initialize smart review session');
       } else if (!res.words || res.words.length === 0) {
@@ -56,7 +67,7 @@ export default function SmartReviewPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wordSource, categoryId, sessionSize]);
 
   useEffect(() => {
     loadSession();
@@ -105,7 +116,6 @@ export default function SmartReviewPage() {
     });
   }, [currentWord, isSubmitting, sessionId, currentIndex, words.length, sessionStats]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (loading || sessionStats.completed || !currentWord) return;
@@ -143,15 +153,14 @@ export default function SmartReviewPage() {
           </div>
           <p className="text-sm font-medium text-slate-700">{error || 'All caught up on reviews!'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/words">
+            <Link href="/learn/flashcards?source=core">
               <Button size="sm" className="w-full">
-                <span>Explore Dictionary</span>
+                <span>Study Core Verbs (Flashcards)</span>
               </Button>
             </Link>
-            <Link href="/words/personal/new">
+            <Link href="/learn">
               <Button size="sm" variant="outline" className="w-full">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Add New Word</span>
+                <span>Back to Learn</span>
               </Button>
             </Link>
           </div>
@@ -171,12 +180,20 @@ export default function SmartReviewPage() {
     );
   }
 
+  const sourceBadge =
+    wordSource === 'core'
+      ? '300 Core Verbs'
+      : wordSource === 'personal'
+      ? 'Personal Words'
+      : 'All Words';
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <SessionHeader
         currentIndex={currentIndex}
         totalWords={words.length}
         modeName="Smart SRS Review"
+        sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
       />
 
@@ -197,10 +214,10 @@ export default function SmartReviewPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Badge variant="brand">{currentWord.part_of_speech}</Badge>
-              {currentWord.progress?.status && (
-                <Badge variant={currentWord.progress.status === 'mastered' ? 'success' : 'default'}>
-                  {currentWord.progress.status}
-                </Badge>
+              {currentWord.isCustom ? (
+                <Badge variant="secondary">Personal Word</Badge>
+              ) : (
+                <Badge variant="outline">Core Dictionary</Badge>
               )}
             </div>
             <TTSButton text={currentWord.headword} />
@@ -314,3 +331,17 @@ export default function SmartReviewPage() {
   );
 }
 
+export default function SmartReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading smart review...</p>
+        </div>
+      }
+    >
+      <SmartReviewContent />
+    </Suspense>
+  );
+}

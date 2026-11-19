@@ -6,6 +6,7 @@ export function SessionHeader({
   currentIndex,
   totalWords,
   modeName = 'Study Session',
+  sourceLabel = null,
   totalXp = 0,
 }) {
   const progressPercent = totalWords > 0 ? Math.round(((currentIndex) / totalWords) * 100) : 0;
@@ -23,6 +24,7 @@ export function SessionHeader({
 
         <div className="flex items-center space-x-2">
           <Badge variant="brand">{modeName}</Badge>
+          {sourceLabel && <Badge variant="secondary">{sourceLabel}</Badge>}
           {totalXp > 0 && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60">
               <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-500 fill-amber-400" />
@@ -46,4 +48,3 @@ export function SessionHeader({
     </div>
   );
 }
-

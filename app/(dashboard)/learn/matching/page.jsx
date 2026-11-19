@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
+import { useState, useEffect, useCallback, useTransition, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, Timer, CheckCircle2, RotateCcw, PlusCircle } from 'lucide-react';
+import { Sparkles, Timer, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { shuffleArray } from '@/lib/services/session-generator';
 import { GRADES } from '@/lib/services/srs';
 
-export default function MatchingPage() {
+function MatchingContent() {
+  const searchParams = useSearchParams();
+  const wordSource = searchParams?.get('source') || 'all';
+  const categoryId = searchParams?.get('category') || null;
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -41,11 +45,17 @@ export default function MatchingPage() {
     setIsCompleted(false);
 
     try {
-      const res = await startStudySessionAction({ mode: 'matching', sessionSize: 6 });
+      const res = await startStudySessionAction({
+        mode: 'matching',
+        wordSource,
+        categoryId,
+        sessionSize: 6,
+      });
+
       if (!res.success) {
         setError(res.error || 'Failed to initialize session');
       } else if (!res.words || res.words.length < 2) {
-        setError('At least 2 vocabulary words are required for speed matching. Add personal words to continue!');
+        setError('At least 2 vocabulary words are required for speed matching.');
       } else {
         const sessionWords = res.words.slice(0, 8); // max 8 pairs
         setSessionId(res.sessionId);
@@ -75,7 +85,7 @@ export default function MatchingPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wordSource, categoryId]);
 
   useEffect(() => {
     loadSession();
@@ -98,13 +108,11 @@ export default function MatchingPage() {
       return;
     }
 
-    // Tapping the same tile deselects it
     if (selectedTile.id === tile.id) {
       setSelectedTile(null);
       return;
     }
 
-    // Both must be opposite types (one English, one Bulgarian)
     if (selectedTile.type === tile.type) {
       setSelectedTile(tile);
       return;
@@ -112,7 +120,6 @@ export default function MatchingPage() {
 
     // Check match
     if (selectedTile.wordId === tile.wordId) {
-      // MATCH!
       const newMatched = new Set(matchedIds);
       newMatched.add(tile.wordId);
       setMatchedIds(newMatched);
@@ -130,7 +137,6 @@ export default function MatchingPage() {
         const earned = res?.xpEarned || 5;
         setTotalXp((xp) => xp + earned);
 
-        // Check if all matched
         if (newMatched.size === words.length) {
           await completeStudySessionAction({
             sessionId,
@@ -144,11 +150,9 @@ export default function MatchingPage() {
         }
       });
     } else {
-      // MISMATCH
       setMistakes((m) => m + 1);
       setWrongPair([selectedTile.id, tile.id]);
 
-      // Shake effect then clear
       setTimeout(() => {
         setWrongPair(null);
         setSelectedTile(null);
@@ -177,12 +181,20 @@ export default function MatchingPage() {
         <Card className="p-8 space-y-5">
           <p className="text-sm font-medium text-slate-700">{error || 'Not enough words for matching.'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/words/personal/new">
-              <Button size="sm" className="w-full">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Add Personal Word</span>
-              </Button>
-            </Link>
+            {wordSource === 'personal' ? (
+              <Link href="/words/personal/new">
+                <Button size="sm" className="w-full">
+                  <PlusCircle className="w-4 h-4 mr-1.5" />
+                  <span>Add Personal Word</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/learn">
+                <Button size="sm" className="w-full">
+                  <span>Back to Study Modes</span>
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="outline" onClick={loadSession}>
               <span>Try Again</span>
             </Button>
@@ -203,6 +215,13 @@ export default function MatchingPage() {
     );
   }
 
+  const sourceBadge =
+    wordSource === 'core'
+      ? '300 Core Verbs'
+      : wordSource === 'personal'
+      ? 'Personal Words'
+      : 'All Words';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Session Top Bar */}
@@ -215,6 +234,10 @@ export default function MatchingPage() {
         </Link>
 
         <div className="flex items-center space-x-3">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+            {sourceBadge}
+          </span>
+
           <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
             <Timer className="w-3.5 h-3.5 mr-1 text-slate-500" />
             <span>{formatTime(elapsedSec)}</span>
@@ -271,3 +294,17 @@ export default function MatchingPage() {
   );
 }
 
+export default function MatchingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading matching game...</p>
+        </div>
+      }
+    >
+      <MatchingContent />
+    </Suspense>
+  );
+}

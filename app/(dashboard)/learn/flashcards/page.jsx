@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useEffect, useCallback, useTransition, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, RotateCw, PlusCircle, Volume2 } from 'lucide-react';
+import { RotateCw, PlusCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,12 @@ import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { GRADES } from '@/lib/services/srs';
 
-export default function FlashcardsPage() {
+function FlashcardsContent() {
+  const searchParams = useSearchParams();
+  const wordSource = searchParams?.get('source') || 'all';
+  const categoryId = searchParams?.get('category') || null;
+  const sessionSize = parseInt(searchParams?.get('size') || '10', 10);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sessionId, setSessionId] = useState(null);
@@ -35,11 +41,23 @@ export default function FlashcardsPage() {
     setIsFlipped(false);
 
     try {
-      const res = await startStudySessionAction({ mode: 'flashcards', sessionSize: 10 });
+      const res = await startStudySessionAction({
+        mode: 'flashcards',
+        wordSource,
+        categoryId,
+        sessionSize,
+      });
+
       if (!res.success) {
         setError(res.error || 'Failed to initialize session');
       } else if (!res.words || res.words.length === 0) {
-        setError('No vocabulary words available for study. Add your own custom words to begin!');
+        setError(
+          wordSource === 'core'
+            ? 'No core vocabulary words found.'
+            : wordSource === 'personal'
+            ? 'You have not added any personal words yet.'
+            : 'No vocabulary words available for study.'
+        );
       } else {
         setSessionId(res.sessionId);
         setWords(res.words);
@@ -55,7 +73,7 @@ export default function FlashcardsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wordSource, categoryId, sessionSize]);
 
   useEffect(() => {
     loadSession();
@@ -141,12 +159,20 @@ export default function FlashcardsPage() {
         <Card className="p-8 space-y-5">
           <p className="text-sm font-medium text-slate-700">{error || 'No words found for study.'}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/words/personal/new">
-              <Button size="sm" className="w-full">
-                <PlusCircle className="w-4 h-4 mr-1.5" />
-                <span>Add Personal Word</span>
-              </Button>
-            </Link>
+            {wordSource === 'personal' ? (
+              <Link href="/words/personal/new">
+                <Button size="sm" className="w-full">
+                  <PlusCircle className="w-4 h-4 mr-1.5" />
+                  <span>Add Personal Word</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/learn">
+                <Button size="sm" className="w-full">
+                  <span>Back to Study Modes</span>
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="outline" onClick={loadSession}>
               <span>Try Again</span>
             </Button>
@@ -167,12 +193,20 @@ export default function FlashcardsPage() {
     );
   }
 
+  const sourceBadge =
+    wordSource === 'core'
+      ? '300 Core Verbs'
+      : wordSource === 'personal'
+      ? 'Personal Words'
+      : 'All Words';
+
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <SessionHeader
         currentIndex={currentIndex}
         totalWords={words.length}
         modeName="Flashcards"
+        sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
       />
 
@@ -194,7 +228,11 @@ export default function FlashcardsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Badge variant="brand">{currentWord.part_of_speech}</Badge>
-              {currentWord.isCustom && <Badge variant="secondary">Personal Word</Badge>}
+              {currentWord.isCustom ? (
+                <Badge variant="secondary">Personal Word</Badge>
+              ) : (
+                <Badge variant="outline">Core Dictionary</Badge>
+              )}
             </div>
             <TTSButton text={currentWord.headword} />
           </div>
@@ -308,3 +346,17 @@ export default function FlashcardsPage() {
   );
 }
 
+export default function FlashcardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading flashcards...</p>
+        </div>
+      }
+    >
+      <FlashcardsContent />
+    </Suspense>
+  );
+}
