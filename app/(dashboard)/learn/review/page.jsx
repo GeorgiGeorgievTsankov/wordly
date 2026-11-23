@@ -182,7 +182,7 @@ function SmartReviewContent() {
 
   const sourceBadge =
     wordSource === 'core'
-      ? '300 Core Verbs'
+      ? 'Core (500 Words)'
       : wordSource === 'personal'
       ? 'Personal Words'
       : 'All Words';

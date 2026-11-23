@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function LearnPage() {
-  const [wordSource, setWordSource] = useState('core'); // 'core' by default so they practice the 300 verbs!
+  const [wordSource, setWordSource] = useState('core'); // 'core' by default for core dictionary
   const [sessionSize, setSessionSize] = useState('10');
 
   const modes = [
@@ -89,7 +89,7 @@ export default function LearnPage() {
                 }`}
               >
                 <Database className="w-3.5 h-3.5" />
-                <span>Core (300 Verbs)</span>
+                <span>Core (500 Words)</span>
               </button>
 
               <button
@@ -169,7 +169,7 @@ export default function LearnPage() {
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-400">
                   {wordSource === 'core'
-                    ? 'Source: 300 Core Verbs'
+                    ? 'Source: Core Words (500)'
                     : wordSource === 'personal'
                     ? 'Source: Personal Words'
                     : 'Source: All Words'}
