@@ -12,6 +12,7 @@ import { SessionHeader } from '@/components/learning/session-header';
 import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { GRADES } from '@/lib/services/srs';
+import { useAutoSound } from '@/lib/services/tts';
 
 function SmartReviewContent() {
   const searchParams = useSearchParams();
@@ -26,6 +27,7 @@ function SmartReviewContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
+  const { autoSound, toggleAutoSound, speak } = useAutoSound();
 
   const [sessionStats, setSessionStats] = useState({
     correct: 0,
@@ -74,6 +76,16 @@ function SmartReviewContent() {
   }, [loadSession]);
 
   const currentWord = words[currentIndex];
+
+  // Auto-pronounce word on card display
+  useEffect(() => {
+    if (autoSound && currentWord?.headword && !sessionStats.completed && !loading) {
+      const timer = setTimeout(() => {
+        speak(currentWord.headword);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, autoSound, currentWord?.headword, sessionStats.completed, loading, speak]);
 
   const handleRate = useCallback((grade) => {
     if (!currentWord || isSubmitting) return;
@@ -195,6 +207,8 @@ function SmartReviewContent() {
         modeName="Smart SRS Review"
         sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
+        autoSound={autoSound}
+        onToggleSound={toggleAutoSound}
       />
 
       {/* Flip Card */}

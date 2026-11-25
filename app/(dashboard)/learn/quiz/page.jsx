@@ -13,6 +13,7 @@ import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { shuffleArray } from '@/lib/services/session-generator';
 import { GRADES } from '@/lib/services/srs';
+import { useAutoSound } from '@/lib/services/tts';
 
 const FALLBACK_DISTRACTORS = [
   'време', 'свят', 'живот', 'работа', 'къща', 'човек', 'ден', 'път',
@@ -34,6 +35,7 @@ function QuizContent() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
+  const { autoSound, toggleAutoSound, speak } = useAutoSound();
 
   const [sessionStats, setSessionStats] = useState({
     correct: 0,
@@ -89,6 +91,16 @@ function QuizContent() {
   }, [loadSession]);
 
   const currentWord = words[currentIndex];
+
+  // Auto-pronounce word on question display
+  useEffect(() => {
+    if (autoSound && currentWord?.headword && !sessionStats.completed && !loading) {
+      const timer = setTimeout(() => {
+        speak(currentWord.headword);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, autoSound, currentWord?.headword, sessionStats.completed, loading, speak]);
 
   // Generate 4 randomized unique options for the current question
   const currentOptions = useMemo(() => {
@@ -231,6 +243,8 @@ function QuizContent() {
         modeName="Multiple Choice"
         sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
+        autoSound={autoSound}
+        onToggleSound={toggleAutoSound}
       />
 
       {/* Question Card */}

@@ -13,6 +13,7 @@ import { SessionComplete } from '@/components/learning/session-complete';
 import { startStudySessionAction, submitReviewAction, completeStudySessionAction } from '@/lib/actions/learning';
 import { isCorrectAnswer } from '@/lib/validation/vocabulary';
 import { GRADES } from '@/lib/services/srs';
+import { useAutoSound } from '@/lib/services/tts';
 
 function TypingContent() {
   const searchParams = useSearchParams();
@@ -30,6 +31,7 @@ function TypingContent() {
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
+  const { autoSound, toggleAutoSound, speak } = useAutoSound();
 
   const inputRef = useRef(null);
 
@@ -93,6 +95,16 @@ function TypingContent() {
   }, [loading, currentIndex, submitted]);
 
   const currentWord = words[currentIndex];
+
+  // Auto-pronounce word on display
+  useEffect(() => {
+    if (autoSound && currentWord?.headword && !sessionStats.completed && !loading) {
+      const timer = setTimeout(() => {
+        speak(currentWord.headword);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, autoSound, currentWord?.headword, sessionStats.completed, loading, speak]);
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
@@ -214,6 +226,8 @@ function TypingContent() {
         modeName="Active Typing"
         sourceLabel={sourceBadge}
         totalXp={sessionStats.totalXp}
+        autoSound={autoSound}
+        onToggleSound={toggleAutoSound}
       />
 
       {/* Target Word Card */}
