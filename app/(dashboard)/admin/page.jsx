@@ -54,17 +54,23 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <Card className="p-5 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Registered Users
-            </span>
-            <p className="text-2xl font-bold text-slate-900">{usersRes.count || 0}</p>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Users className="w-5 h-5" />
-          </div>
-        </Card>
+        <Link href="/admin/users" className="block group">
+          <Card hover className="p-5 flex items-center justify-between transition-all group-hover:border-indigo-300 group-hover:shadow-md">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider group-hover:text-indigo-600 transition-colors">
+                Registered Users
+              </span>
+              <p className="text-2xl font-bold text-slate-900">{usersRes.count || 0}</p>
+              <p className="text-[11px] text-indigo-600 font-medium flex items-center gap-0.5">
+                <span>View directory</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <Users className="w-5 h-5" />
+            </div>
+          </Card>
+        </Link>
 
         <Card className="p-5 flex items-center justify-between">
           <div className="space-y-1">
@@ -93,7 +99,28 @@ export default async function AdminPage() {
 
       {/* Admin Modules Grid */}
       <h2 className="text-lg font-bold text-slate-900 pt-2">Management Tools</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <Card hover className="p-6 flex flex-col justify-between">
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <CardTitle>User Directory</CardTitle>
+            <CardDescription>
+              Browse all registered learners, view account emails, roles, registration dates, and vocabulary learning progress.
+            </CardDescription>
+          </div>
+          <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+            <Badge variant="secondary">{usersRes.count || 0} Registered</Badge>
+            <Link href="/admin/users">
+              <Button size="sm">
+                <span>View Users</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
         <Card hover className="p-6 flex flex-col justify-between">
           <div className="space-y-2">
             <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -108,7 +135,7 @@ export default async function AdminPage() {
             <Badge variant="secondary">{submissionsRes.count || 0} Pending</Badge>
             <Link href="/admin/submissions">
               <Button size="sm">
-                <span>Moderate Submissions</span>
+                <span>Moderate</span>
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </Link>
@@ -122,7 +149,7 @@ export default async function AdminPage() {
             </div>
             <CardTitle>Batch Vocabulary Import</CardTitle>
             <CardDescription>
-              Import core English vocabulary with Bulgarian translations via JSON or CSV format. Automatic duplicate detection.
+              Import core English vocabulary with Bulgarian translations via JSON or CSV format with instant preview.
             </CardDescription>
           </div>
           <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-end">
