@@ -276,9 +276,9 @@ function TypingContent() {
             className={`w-full px-5 py-4 text-lg rounded-2xl border-2 transition-all outline-none ${
               submitted
                 ? isCorrect
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold'
-                  : 'border-rose-500 bg-rose-50 text-rose-950 font-bold'
-                : 'border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-950 font-extrabold ring-4 ring-emerald-100'
+                  : 'border-rose-500 bg-rose-50 text-rose-950 font-extrabold ring-4 ring-rose-100'
+                : 'border-slate-200/90 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100'
             }`}
           />
         </div>

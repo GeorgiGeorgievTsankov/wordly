@@ -265,7 +265,7 @@ function FlashcardsContent() {
 
             {isFlipped ? (
               <div className="pt-4 border-t border-slate-100 space-y-3 animate-in fade-in duration-200">
-                <p className="text-2xl font-extrabold text-indigo-600">
+                <p className="text-3xl sm:text-4xl font-black text-indigo-600 tracking-tight">
                   {currentWord.translation}
                 </p>
 
@@ -276,10 +276,10 @@ function FlashcardsContent() {
                 )}
 
                 {currentWord.example_sentence && (
-                  <div className="bg-slate-50 p-3 rounded-xl text-left text-xs sm:text-sm text-slate-700 space-y-1">
-                    <p className="font-medium text-slate-900">“{currentWord.example_sentence}”</p>
+                  <div className="bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl text-left text-xs sm:text-sm text-slate-700 space-y-1">
+                    <p className="font-semibold text-slate-900">“{currentWord.example_sentence}”</p>
                     {currentWord.example_translation && (
-                      <p className="text-slate-500">“{currentWord.example_translation}”</p>
+                      <p className="text-slate-600 font-medium">“{currentWord.example_translation}”</p>
                     )}
                   </div>
                 )}
@@ -301,50 +301,46 @@ function FlashcardsContent() {
       {/* SRS Rating Actions (Visible when flipped) */}
       {isFlipped ? (
         <div className="space-y-2 animate-in fade-in duration-200">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <Button
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <button
               type="button"
-              variant="outline"
               disabled={isSubmitting}
               onClick={() => handleRate(GRADES.AGAIN)}
-              className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 py-3 flex-col h-auto"
+              className="py-3 px-2 rounded-2xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-extrabold shadow-md shadow-rose-500/25 border-b-4 border-rose-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-rose-400"
             >
-              <span className="font-bold text-sm">Again</span>
-              <span className="text-[10px] text-rose-500 font-normal">Key 1 (Reset)</span>
-            </Button>
+              <span className="text-sm sm:text-base tracking-wide">Again</span>
+              <span className="text-[10px] text-rose-100 font-semibold mt-0.5">Key 1 (Reset)</span>
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={isSubmitting}
               onClick={() => handleRate(GRADES.HARD)}
-              className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300 py-3 flex-col h-auto"
+              className="py-3 px-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold shadow-md shadow-amber-500/25 border-b-4 border-amber-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400"
             >
-              <span className="font-bold text-sm">Hard</span>
-              <span className="text-[10px] text-amber-500 font-normal">Key 2 (Slow)</span>
-            </Button>
+              <span className="text-sm sm:text-base tracking-wide">Hard</span>
+              <span className="text-[10px] text-amber-100 font-semibold mt-0.5">Key 2 (Slow)</span>
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={isSubmitting}
               onClick={() => handleRate(GRADES.GOOD)}
-              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 py-3 flex-col h-auto"
+              className="py-3 px-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold shadow-md shadow-emerald-500/25 border-b-4 border-emerald-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-400"
             >
-              <span className="font-bold text-sm">Good</span>
-              <span className="text-[10px] text-emerald-500 font-normal">Key 3 (Normal)</span>
-            </Button>
+              <span className="text-sm sm:text-base tracking-wide">Good</span>
+              <span className="text-[10px] text-emerald-100 font-semibold mt-0.5">Key 3 (Normal)</span>
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={isSubmitting}
               onClick={() => handleRate(GRADES.EASY)}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 py-3 flex-col h-auto"
+              className="py-3 px-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold shadow-md shadow-indigo-600/25 border-b-4 border-indigo-800 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
-              <span className="font-bold text-sm">Easy</span>
-              <span className="text-[10px] text-indigo-500 font-normal">Key 4 (Fast)</span>
-            </Button>
+              <span className="text-sm sm:text-base tracking-wide">Easy</span>
+              <span className="text-[10px] text-indigo-100 font-semibold mt-0.5">Key 4 (Fast)</span>
+            </button>
           </div>
         </div>
       ) : (

@@ -279,15 +279,15 @@ function QuizContent() {
       {/* 4 Options */}
       <div className="grid grid-cols-1 gap-3">
         {currentOptions.map((option, idx) => {
-          let btnStyle = 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50 text-slate-800';
+          let btnStyle = 'border-slate-200/90 hover:border-indigo-400 hover:bg-slate-50 text-slate-900 bg-white active:scale-[0.99]';
 
           if (hasAnswered) {
             if (option === currentWord.translation) {
-              btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold';
+              btnStyle = 'border-emerald-600 bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/25 ring-2 ring-emerald-300';
             } else if (option === selectedAnswer) {
-              btnStyle = 'border-rose-500 bg-rose-50 text-rose-900 line-through';
+              btnStyle = 'border-rose-600 bg-rose-500 text-white font-bold line-through shadow-md shadow-rose-500/25';
             } else {
-              btnStyle = 'opacity-40 border-slate-200 text-slate-500';
+              btnStyle = 'opacity-35 border-slate-200 bg-slate-50 text-slate-400';
             }
           }
 
@@ -297,14 +297,14 @@ function QuizContent() {
               type="button"
               disabled={hasAnswered}
               onClick={() => handleSelectOption(option)}
-              className={`p-4 rounded-2xl border-2 text-left font-medium text-base sm:text-lg transition-all flex items-center justify-between ${btnStyle}`}
+              className={`p-4 rounded-2xl border-2 text-left font-semibold text-base sm:text-lg transition-all flex items-center justify-between ${btnStyle}`}
             >
               <span>{option}</span>
               {hasAnswered && option === currentWord.translation && (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-white" />
               )}
               {hasAnswered && option === selectedAnswer && option !== currentWord.translation && (
-                <XCircle className="w-5 h-5 text-rose-600" />
+                <XCircle className="w-5 h-5 text-white" />
               )}
             </button>
           );

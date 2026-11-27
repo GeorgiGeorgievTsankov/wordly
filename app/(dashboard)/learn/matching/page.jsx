@@ -263,14 +263,14 @@ function MatchingContent() {
           const isSelected = selectedTile?.id === tile.id;
           const isWrong = wrongPair?.includes(tile.id);
 
-          let tileClass = 'border-slate-200 hover:border-indigo-400 hover:shadow-md bg-white text-slate-800';
+          let tileClass = 'border-slate-200/90 hover:border-indigo-400 hover:shadow-md bg-white text-slate-900 active:scale-95';
 
           if (isMatched) {
-            tileClass = 'border-emerald-200 bg-emerald-50/60 text-emerald-600 opacity-40 pointer-events-none scale-95';
+            tileClass = 'border-emerald-300 bg-emerald-100/60 text-emerald-700 opacity-30 pointer-events-none scale-95 line-through';
           } else if (isWrong) {
-            tileClass = 'border-rose-400 bg-rose-50 text-rose-800 animate-shake';
+            tileClass = 'border-rose-600 bg-rose-500 text-white font-black shadow-lg shadow-rose-500/30 animate-shake';
           } else if (isSelected) {
-            tileClass = 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-bold shadow-md ring-2 ring-indigo-500';
+            tileClass = 'border-indigo-600 bg-indigo-600 text-white font-black shadow-lg shadow-indigo-600/35 scale-105 ring-4 ring-indigo-200';
           }
 
           return (
