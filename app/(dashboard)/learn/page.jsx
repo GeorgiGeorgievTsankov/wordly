@@ -1,15 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BookOpen, ListChecks, Keyboard, Shuffle, ArrowRight, BrainCircuit, Sparkles, Filter, Database, UserCheck } from 'lucide-react';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LearnPage() {
   const [wordSource, setWordSource] = useState('core'); // 'core' by default for core dictionary
   const [sessionSize, setSessionSize] = useState('10');
+  const [coreCount, setCoreCount] = useState(700);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('words')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .then(({ count }) => {
+        if (count) setCoreCount(count);
+      });
+  }, []);
 
   const modes = [
     {
@@ -89,7 +102,7 @@ export default function LearnPage() {
                 }`}
               >
                 <Database className="w-3.5 h-3.5" />
-                <span>Core (500 Words)</span>
+                <span>Core ({coreCount} Words)</span>
               </button>
 
               <button
@@ -169,7 +182,7 @@ export default function LearnPage() {
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-400">
                   {wordSource === 'core'
-                    ? 'Source: Core Words (500)'
+                    ? `Source: Core Words (${coreCount})`
                     : wordSource === 'personal'
                     ? 'Source: Personal Words'
                     : 'Source: All Words'}

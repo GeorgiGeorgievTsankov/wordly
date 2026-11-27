@@ -230,7 +230,7 @@ function QuizContent() {
 
   const sourceBadge =
     wordSource === 'core'
-      ? 'Core (500 Words)'
+      ? 'Core Words'
       : wordSource === 'personal'
       ? 'Personal Words'
       : 'All Words';
