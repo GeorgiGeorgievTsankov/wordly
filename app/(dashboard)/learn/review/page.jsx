@@ -26,6 +26,7 @@ function SmartReviewContent() {
   const [words, setWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState(null);
   const [isSubmitting, startTransition] = useTransition();
   const { autoSound, toggleAutoSound, speak } = useAutoSound();
 
@@ -41,6 +42,7 @@ function SmartReviewContent() {
     setError(null);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setSelectedGrade(null);
 
     try {
       const res = await startStudySessionAction({
@@ -88,17 +90,21 @@ function SmartReviewContent() {
   }, [currentIndex, autoSound, currentWord?.headword, sessionStats.completed, loading, speak]);
 
   const handleRate = useCallback((grade) => {
-    if (!currentWord || isSubmitting) return;
+    if (!currentWord || isSubmitting || selectedGrade !== null) return;
+    setSelectedGrade(grade);
 
     startTransition(async () => {
       const isSuccess = grade !== GRADES.AGAIN;
-      const res = await submitReviewAction({
-        sessionId,
-        wordId: currentWord.id,
-        isCustom: currentWord.isCustom,
-        grade,
-        reviewMode: 'review',
-      });
+      const [res] = await Promise.all([
+        submitReviewAction({
+          sessionId,
+          wordId: currentWord.id,
+          isCustom: currentWord.isCustom,
+          grade,
+          reviewMode: 'review',
+        }),
+        new Promise((resolve) => setTimeout(resolve, 260)),
+      ]);
 
       const earned = res?.xpEarned || 0;
       setSessionStats((prev) => ({
@@ -106,6 +112,8 @@ function SmartReviewContent() {
         correct: prev.correct + (isSuccess ? 1 : 0),
         totalXp: prev.totalXp + earned,
       }));
+
+      setSelectedGrade(null);
 
       if (currentIndex + 1 < words.length) {
         setIsFlipped(false);
@@ -126,7 +134,7 @@ function SmartReviewContent() {
         }));
       }
     });
-  }, [currentWord, isSubmitting, sessionId, currentIndex, words.length, sessionStats]);
+  }, [currentWord, isSubmitting, selectedGrade, sessionId, currentIndex, words.length, sessionStats]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -287,44 +295,80 @@ function SmartReviewContent() {
       {isFlipped ? (
         <div className="space-y-2 animate-in fade-in duration-200">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            {/* Again */}
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || selectedGrade !== null}
               onClick={() => handleRate(GRADES.AGAIN)}
-              className="py-3 px-2 rounded-2xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white font-extrabold shadow-md shadow-rose-500/25 border-b-4 border-rose-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className={`py-3 px-2 rounded-2xl border transition-all duration-150 flex flex-col items-center justify-center focus:outline-none select-none ${
+                selectedGrade === GRADES.AGAIN
+                  ? 'bg-rose-500 border-rose-600 text-white font-black shadow-lg shadow-rose-500/35 scale-105 ring-4 ring-rose-200'
+                  : selectedGrade !== null
+                  ? 'opacity-30 scale-95 pointer-events-none bg-white text-slate-400 border-slate-200'
+                  : 'bg-rose-50/40 border-rose-200 hover:bg-rose-100/60 hover:border-rose-300 text-rose-700 font-semibold active:scale-95'
+              }`}
             >
               <span className="text-sm sm:text-base tracking-wide">Again</span>
-              <span className="text-[10px] text-rose-100 font-semibold mt-0.5">Key 1 (Reset)</span>
+              <span className={`text-[10px] font-medium mt-0.5 ${selectedGrade === GRADES.AGAIN ? 'text-rose-100 font-bold' : 'text-rose-500'}`}>
+                Key 1 (Reset)
+              </span>
             </button>
 
+            {/* Hard */}
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || selectedGrade !== null}
               onClick={() => handleRate(GRADES.HARD)}
-              className="py-3 px-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold shadow-md shadow-amber-500/25 border-b-4 border-amber-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className={`py-3 px-2 rounded-2xl border transition-all duration-150 flex flex-col items-center justify-center focus:outline-none select-none ${
+                selectedGrade === GRADES.HARD
+                  ? 'bg-amber-500 border-amber-600 text-white font-black shadow-lg shadow-amber-500/35 scale-105 ring-4 ring-amber-200'
+                  : selectedGrade !== null
+                  ? 'opacity-30 scale-95 pointer-events-none bg-white text-slate-400 border-slate-200'
+                  : 'bg-amber-50/40 border-amber-200 hover:bg-amber-100/60 hover:border-amber-300 text-amber-700 font-semibold active:scale-95'
+              }`}
             >
               <span className="text-sm sm:text-base tracking-wide">Hard</span>
-              <span className="text-[10px] text-amber-100 font-semibold mt-0.5">Key 2 (Slow)</span>
+              <span className={`text-[10px] font-medium mt-0.5 ${selectedGrade === GRADES.HARD ? 'text-amber-100 font-bold' : 'text-amber-600'}`}>
+                Key 2 (Slow)
+              </span>
             </button>
 
+            {/* Good */}
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || selectedGrade !== null}
               onClick={() => handleRate(GRADES.GOOD)}
-              className="py-3 px-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold shadow-md shadow-emerald-500/25 border-b-4 border-emerald-700 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className={`py-3 px-2 rounded-2xl border transition-all duration-150 flex flex-col items-center justify-center focus:outline-none select-none ${
+                selectedGrade === GRADES.GOOD
+                  ? 'bg-emerald-500 border-emerald-600 text-white font-black shadow-lg shadow-emerald-500/35 scale-105 ring-4 ring-emerald-200'
+                  : selectedGrade !== null
+                  ? 'opacity-30 scale-95 pointer-events-none bg-white text-slate-400 border-slate-200'
+                  : 'bg-emerald-50/40 border-emerald-200 hover:bg-emerald-100/60 hover:border-emerald-300 text-emerald-700 font-semibold active:scale-95'
+              }`}
             >
               <span className="text-sm sm:text-base tracking-wide">Good</span>
-              <span className="text-[10px] text-emerald-100 font-semibold mt-0.5">Key 3 (Normal)</span>
+              <span className={`text-[10px] font-medium mt-0.5 ${selectedGrade === GRADES.GOOD ? 'text-emerald-100 font-bold' : 'text-emerald-600'}`}>
+                Key 3 (Normal)
+              </span>
             </button>
 
+            {/* Easy */}
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || selectedGrade !== null}
               onClick={() => handleRate(GRADES.EASY)}
-              className="py-3 px-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold shadow-md shadow-indigo-600/25 border-b-4 border-indigo-800 transition-all flex flex-col items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className={`py-3 px-2 rounded-2xl border transition-all duration-150 flex flex-col items-center justify-center focus:outline-none select-none ${
+                selectedGrade === GRADES.EASY
+                  ? 'bg-indigo-600 border-indigo-700 text-white font-black shadow-lg shadow-indigo-600/35 scale-105 ring-4 ring-indigo-200'
+                  : selectedGrade !== null
+                  ? 'opacity-30 scale-95 pointer-events-none bg-white text-slate-400 border-slate-200'
+                  : 'bg-indigo-50/40 border-indigo-200 hover:bg-indigo-100/60 hover:border-indigo-300 text-indigo-700 font-semibold active:scale-95'
+              }`}
             >
               <span className="text-sm sm:text-base tracking-wide">Easy</span>
-              <span className="text-[10px] text-indigo-100 font-semibold mt-0.5">Key 4 (Fast)</span>
+              <span className={`text-[10px] font-medium mt-0.5 ${selectedGrade === GRADES.EASY ? 'text-indigo-100 font-bold' : 'text-indigo-600'}`}>
+                Key 4 (Fast)
+              </span>
             </button>
           </div>
         </div>
